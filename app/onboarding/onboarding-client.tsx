@@ -16,6 +16,7 @@ import {
   AlertCircle,
   ArrowRight,
   Check,
+  Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +30,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role | null>(null);
-  const [joinCode, setJoinCode] = useState("");
-  const [adminCode, setAdminCode] = useState("");
+  const [roomCode, setRoomCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -65,6 +65,10 @@ export default function OnboardingPage() {
       setError("Please select a role.");
       return;
     }
+    if (role === "student" && !roomCode.trim()) {
+      setError("Please enter your teacher's room code.");
+      return;
+    }
     setLoading(true);
     setError("");
 
@@ -75,8 +79,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           name: name.trim(),
           role,
-          joinCode: role === "student" ? joinCode.trim().toUpperCase() : undefined,
-          adminCode: role === "teacher" ? adminCode : undefined,
+          roomCode: role === "student" ? roomCode.trim().toUpperCase() : undefined,
         }),
       });
 
@@ -224,7 +227,7 @@ export default function OnboardingPage() {
                 >
                   <GraduationCap className={cn("w-6 h-6 mb-2", role === "student" ? "text-[#E8A045]" : "text-gray-400")} />
                   <p className={cn("font-semibold text-sm", role === "student" ? "text-[#E8A045]" : "text-white")}>Student</p>
-                  <p className="text-gray-500 text-xs mt-0.5">Join a team with a code</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Join with a room code</p>
                 </button>
 
                 <button
@@ -243,36 +246,35 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
-              {/* Conditional fields */}
+              {/* Student: enter room code */}
               {role === "student" && (
                 <div className="space-y-2 animate-fade-in">
-                  <Label htmlFor="joinCode">Team join code</Label>
+                  <Label htmlFor="roomCode" className="flex items-center gap-1.5">
+                    <Hash className="w-3.5 h-3.5 text-[#E8A045]" />
+                    Room code
+                  </Label>
                   <Input
-                    id="joinCode"
+                    id="roomCode"
                     type="text"
-                    placeholder="e.g. ALPHA01"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. K3M9XP"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                     required
-                    maxLength={20}
-                    className="uppercase tracking-widest"
+                    maxLength={10}
+                    className="uppercase tracking-widest font-mono text-center text-lg"
+                    autoFocus
                   />
-                  <p className="text-gray-500 text-xs">Your teacher will give you this code</p>
+                  <p className="text-gray-500 text-xs">Your teacher will display this code at the start of class</p>
                 </div>
               )}
 
+              {/* Teacher: no code needed */}
               {role === "teacher" && (
-                <div className="space-y-2 animate-fade-in">
-                  <Label htmlFor="adminCode">Admin access code</Label>
-                  <Input
-                    id="adminCode"
-                    type="password"
-                    placeholder="Enter the admin code"
-                    value={adminCode}
-                    onChange={(e) => setAdminCode(e.target.value)}
-                    required
-                  />
-                  <p className="text-gray-500 text-xs">Contact your administrator if you don&apos;t have this</p>
+                <div className="rounded-lg bg-[#4A9EFF]/5 border border-[#4A9EFF]/20 p-3 animate-fade-in">
+                  <p className="text-[#4A9EFF] text-sm font-medium">You&apos;re signing up as a teacher</p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    After setup you&apos;ll create a session and get a unique room code to share with your students.
+                  </p>
                 </div>
               )}
 

@@ -85,10 +85,29 @@ export default function AdminClient({
   const [expandedPitchRound, setExpandedPitchRound] = useState<number | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Team creation loading
+  function generateSessionCode(): string {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars (0/O, 1/I)
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  }
+
   async function handleCreateSession(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+
+    // Generate a unique session code (retry if collision)
+    let sessionCode = generateSessionCode();
+    let attempts = 0;
+    while (attempts < 5) {
+      const { data: existing } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("session_code", sessionCode)
+        .single();
+      if (!existing) break;
+      sessionCode = generateSessionCode();
+      attempts++;
+    }
+
     const { data, error } = await supabase
       .from("sessions")
       .insert({
@@ -97,6 +116,7 @@ export default function AdminClient({
         status: "active",
         current_round: 1,
         submissions_open: false,
+        session_code: sessionCode,
       })
       .select()
       .single();
@@ -106,7 +126,7 @@ export default function AdminClient({
       toast({ title: "Error creating session", description: error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Session created!", variant: "default" });
+    toast({ title: `Session created! Room code: ${sessionCode}`, variant: "default" });
     setCreateSessionOpen(false);
     setSessionName("");
     router.refresh();
@@ -343,6 +363,37 @@ export default function AdminClient({
                 </Button>
               </div>
             ) : (
+              <div className="space-y-6">
+
+              {/* Room Code Banner */}
+              {activeSession.session_code && (
+                <div className="bg-[#111111] border border-[#E8A045]/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[#E8A045] text-xs font-semibold uppercase tracking-wider mb-1">Student Room Code</p>
+                    <p className="text-gray-400 text-xs">Share this code with your students — they enter it when signing up</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-5 py-2.5">
+                      <span className="font-mono text-2xl font-bold tracking-[0.3em] text-[#E8A045]">
+                        {activeSession.session_code}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyCode(activeSession.session_code!)}
+                    >
+                      {copiedCode === activeSession.session_code ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                      {copiedCode === activeSession.session_code ? "Copied!" : "Copy"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Round control */}
                 <Card>
@@ -515,6 +566,7 @@ export default function AdminClient({
                     </CardContent>
                   </Card>
                 )}
+              </div>
               </div>
             )}
           </TabsContent>

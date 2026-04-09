@@ -16,6 +16,7 @@ export interface Database {
           name: string | null;
           role: "teacher" | "student";
           team_id: string | null;
+          session_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -24,6 +25,7 @@ export interface Database {
           name?: string | null;
           role?: "teacher" | "student";
           team_id?: string | null;
+          session_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -32,6 +34,7 @@ export interface Database {
           name?: string | null;
           role?: "teacher" | "student";
           team_id?: string | null;
+          session_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -68,6 +71,7 @@ export interface Database {
           status: "active" | "closed";
           created_by: string;
           submissions_open: boolean;
+          session_code: string | null;
         };
         Insert: {
           id?: string;
@@ -76,6 +80,7 @@ export interface Database {
           status?: "active" | "closed";
           created_by: string;
           submissions_open?: boolean;
+          session_code?: string | null;
         };
         Update: {
           id?: string;
@@ -84,6 +89,7 @@ export interface Database {
           status?: "active" | "closed";
           created_by?: string;
           submissions_open?: boolean;
+          session_code?: string | null;
         };
         Relationships: [];
       };
