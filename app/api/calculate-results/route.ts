@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/types";
 
@@ -63,19 +64,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "sessionId is required." }, { status: 400 });
     }
 
-    // Use service role client for all DB operations
-    const serviceClient = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll() {},
-        },
-      }
-    );
+    // Use service role client for all DB operations (bypasses RLS)
+    const serviceClient = createServiceClient();
 
     // Get current session
     const { data: session, error: sessionError } = await serviceClient

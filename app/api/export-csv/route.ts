@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/types";
 
@@ -48,19 +49,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
-    // Service role client
-    const serviceClient = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll() {},
-        },
-      }
-    );
+    // Service role client (bypasses RLS)
+    const serviceClient = createServiceClient();
 
     // Get all teams in session
     const { data: teams } = await serviceClient
