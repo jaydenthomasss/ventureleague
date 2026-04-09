@@ -111,20 +111,21 @@ export async function POST(request: NextRequest) {
       // If no teams exist yet, student will be unassigned (team_id null, session_id set)
     }
 
-    // Upsert user record
+    // Upsert core user record
     const { error: upsertError } = await serviceClient
       .from("users")
       .upsert(
-        {
-          id: user.id,
-          email: user.email!,
-          name,
-          role,
-          team_id: teamId,
-          session_id: sessionId,
-        },
+        { id: user.id, email: user.email!, name, role, team_id: teamId },
         { onConflict: "id" }
       );
+
+    // Separately set session_id if present (requires migration 002 to have been run)
+    if (!upsertError && sessionId) {
+      await serviceClient
+        .from("users")
+        .update({ session_id: sessionId })
+        .eq("id", user.id);
+    }
 
     if (upsertError) {
       console.error("Upsert error:", upsertError);
